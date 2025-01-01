@@ -7,8 +7,11 @@ import {
   Param,
   Patch,
   Post,
+  Query,
 } from '@nestjs/common';
-import { ClientProxy } from '@nestjs/microservices';
+import { ClientProxy, RpcException } from '@nestjs/microservices';
+import { firstValueFrom } from 'rxjs';
+import { PaginationDto } from 'src/common/dto/pagination.dto';
 import { PRODUCT_SERVICE } from 'src/config/services';
 
 @Controller('products')
@@ -23,13 +26,24 @@ export class ProductsController {
   }
 
   @Get()
-  getAll() {
-    return this.productsClient.send({ cmd: 'find_all_products' }, {});
+  getAll(@Query() paginationDto: PaginationDto) {
+    return this.productsClient.send(
+      { cmd: 'find_all_products' },
+      paginationDto,
+    );
   }
 
   @Get(':id')
-  getById(@Param('id') id: string) {
-    return 'Product with id: ' + id;
+  async getById(@Param('id') id: string) {
+    try {
+      const product = await firstValueFrom(
+        this.productsClient.send({ cmd: 'find_one_product' }, { id }),
+      );
+
+      return product;
+    } catch (error) {
+      throw new RpcException(error);
+    }
   }
 
   @Delete(':id')
