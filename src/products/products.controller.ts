@@ -5,6 +5,7 @@ import {
   Get,
   Inject,
   Param,
+  ParseIntPipe,
   Patch,
   Post,
   Query,
@@ -13,6 +14,8 @@ import { ClientProxy, RpcException } from '@nestjs/microservices';
 import { catchError } from 'rxjs';
 import { PaginationDto } from 'src/common/dto/pagination.dto';
 import { PRODUCT_SERVICE } from 'src/config/services';
+import { CreateProductDto } from './dto/create-product.dto';
+import { UpdateProductDto } from './dto/update-product.dto';
 
 @Controller('products')
 export class ProductsController {
@@ -21,8 +24,11 @@ export class ProductsController {
   ) {}
 
   @Post()
-  create() {
-    return 'Crea un product';
+  create(@Body() createProductDto: CreateProductDto) {
+    return this.productsClient.send(
+      { cmd: 'create_product' },
+      createProductDto,
+    );
   }
 
   @Get()
@@ -34,7 +40,7 @@ export class ProductsController {
   }
 
   @Get(':id')
-  getById(@Param('id') id: string) {
+  getById(@Param('id', ParseIntPipe) id: number) {
     return this.productsClient.send({ cmd: 'find_one_product' }, { id }).pipe(
       catchError((error) => {
         throw new RpcException(error);
@@ -43,12 +49,38 @@ export class ProductsController {
   }
 
   @Delete(':id')
-  delete(@Param('id') id: string) {
-    return 'Delete product with id: ' + id;
+  delete(@Param('id', ParseIntPipe) id: number) {
+    return this.productsClient
+      .send(
+        { cmd: 'delete_product' },
+        {
+          id,
+        },
+      )
+      .pipe(
+        catchError((error) => {
+          throw new RpcException(error);
+        }),
+      );
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() body: any) {
-    return body;
+  update(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() updateProductDto: UpdateProductDto,
+  ) {
+    return this.productsClient
+      .send(
+        { cmd: 'update_product' },
+        {
+          ...updateProductDto,
+          id,
+        },
+      )
+      .pipe(
+        catchError((error) => {
+          throw new RpcException(error);
+        }),
+      );
   }
 }
