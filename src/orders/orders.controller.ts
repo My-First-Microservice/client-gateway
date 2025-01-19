@@ -7,6 +7,7 @@ import {
   Inject,
   ParseUUIDPipe,
   Query,
+  Patch,
 } from '@nestjs/common';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { ORDER_SERVICE } from 'src/config/services';
@@ -15,6 +16,7 @@ import { catchError } from 'rxjs';
 import { OrderPaginationDto } from './dto/order-pagination.dto';
 import { PaginationDto } from 'src/common/dto/pagination.dto';
 import { StatusDto } from './dto/status.dto';
+import { ChangeStatusDto } from './dto/change-status.dto';
 
 @Controller('orders')
 export class OrdersController {
@@ -51,6 +53,23 @@ export class OrdersController {
       .send('findAllOrders', {
         ...statusDto,
         ...paginationDto,
+      })
+      .pipe(
+        catchError((error) => {
+          throw new RpcException(error);
+        }),
+      );
+  }
+
+  @Patch(':id')
+  changeStatus(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() statusDto: ChangeStatusDto,
+  ) {
+    return this.ordersClient
+      .send('changeOrderStatus', {
+        id,
+        ...statusDto,
       })
       .pipe(
         catchError((error) => {

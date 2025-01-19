@@ -1,10 +1,4 @@
-import { IsEnum, IsOptional } from 'class-validator';
-import { OrderStatus, OrderStatusList } from '../enum/order.enum';
+import { PartialType } from '@nestjs/mapped-types';
+import { ChangeStatusDto } from './change-status.dto';
 
-export class StatusDto {
-  @IsEnum(OrderStatusList, {
-    message: `Valid status are: ${OrderStatusList}`,
-  })
-  @IsOptional()
-  status: OrderStatus;
-}
+export class StatusDto extends PartialType(ChangeStatusDto) {}
